@@ -104,6 +104,17 @@ h1, h2, p { margin-top: 0; }
 .destination-results small { color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .result-pin { color: var(--violet); font-size: .8rem; }
 .result-arrow { color: var(--violet); font-size: 1.25rem; }
+.saved-destination-section { margin-top: 28px; }
+.saved-destination-section + .saved-destination-section { margin-top: 24px; }
+.saved-destination-section h2 { margin: 0 0 8px; color: var(--ink); font-size: 1rem; letter-spacing: -.02em; }
+.saved-destination-list { list-style: none; padding: 0; margin: 0; border-top: 1px solid var(--line); }
+.saved-destination-list li { min-height: 62px; display: grid; grid-template-columns: minmax(0, 1fr) 48px; align-items: stretch; border-bottom: 1px solid var(--line); }
+.saved-destination-select { min-width: 0; display: grid; grid-template-columns: 24px minmax(0, 1fr) 24px; align-items: center; gap: 9px; border: 0; background: transparent; color: var(--ink); text-align: left; cursor: pointer; padding: 9px 3px; }
+.saved-destination-select > span:nth-child(2) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 700; }
+.saved-destination-icon { color: var(--violet); font-size: 1rem; }
+.favorite-toggle { min-width: 44px; border: 0; background: transparent; color: #777184; cursor: pointer; font-size: 1.45rem; border-radius: 12px; }
+.favorite-toggle:hover { background: var(--violet-soft); color: var(--violet); }
+.favorite-toggle.is-favorite { color: var(--violet); }
 .attribution { margin-top: 28px; }
 .attribution a { color: inherit; }
 

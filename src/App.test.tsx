@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import App from './App'
-import { TRIP_STORAGE_KEY } from './lib/storage'
+import { DESTINATIONS_STORAGE_KEY, TRIP_STORAGE_KEY } from './lib/storage'
 import type { TripState } from './types'
 
 const stationInformation = {
@@ -72,6 +72,9 @@ describe('App flow', () => {
 
     await user.type(screen.getByLabelText('Ziel oder Adresse'), 'Marienplatz')
     await user.click(await screen.findByRole('button', { name: /Marienplatz, 80331 München/ }, { timeout: 2_000 }))
+    await waitFor(() => expect(JSON.parse(localStorage.getItem(DESTINATIONS_STORAGE_KEY) ?? '{}')).toMatchObject({
+      recents: ['Marienplatz'],
+    }))
     await user.click(await screen.findByRole('button', { name: /Tal & Marienplatz/ }))
 
     expect(await screen.findByText('Navigation aktiv')).toBeInTheDocument()
@@ -83,6 +86,55 @@ describe('App flow', () => {
     await user.click(screen.getByRole('button', { name: 'Ja, Fahrt beenden' }))
     expect(screen.getByRole('button', { name: /Fahrt starten/ })).toBeInTheDocument()
     expect(localStorage.getItem(TRIP_STORAGE_KEY)).toBeNull()
+    expect(JSON.parse(localStorage.getItem(DESTINATIONS_STORAGE_KEY) ?? '{}')).toMatchObject({
+      recents: ['Marienplatz'],
+    })
+  })
+
+  it('shows saved destinations only before typing and repeats their search on selection', async () => {
+    localStorage.setItem(DESTINATIONS_STORAGE_KEY, JSON.stringify({
+      version: 1,
+      recents: ['Marienplatz'],
+      favorites: [],
+    }))
+    const user = userEvent.setup()
+    render(<App />)
+    await user.click(screen.getByRole('button', { name: /Fahrt starten/ }))
+
+    expect(screen.getByRole('heading', { name: 'Letzte Ziele' })).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Favoriten' })).not.toBeInTheDocument()
+
+    await user.type(screen.getByLabelText('Ziel oder Adresse'), 'Test')
+    expect(screen.queryByRole('heading', { name: 'Letzte Ziele' })).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Suche leeren' }))
+    await user.click(screen.getByRole('button', { name: 'Marienplatz' }))
+
+    expect(screen.getByLabelText('Ziel oder Adresse')).toHaveValue('Marienplatz')
+    expect(screen.queryByRole('heading', { name: 'Letzte Ziele' })).not.toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: /Marienplatz, 80331 München/ }, { timeout: 2_000 })).toBeInTheDocument()
+  })
+
+  it('adds and removes a favorite from the saved destination lists', async () => {
+    localStorage.setItem(DESTINATIONS_STORAGE_KEY, JSON.stringify({
+      version: 1,
+      recents: ['Sendlinger Tor'],
+      favorites: [],
+    }))
+    const user = userEvent.setup()
+    render(<App />)
+    await user.click(screen.getByRole('button', { name: /Fahrt starten/ }))
+
+    await user.click(screen.getByRole('button', { name: 'Zu Favoriten hinzufügen: Sendlinger Tor' }))
+    expect(screen.getByRole('heading', { name: 'Favoriten' })).toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: 'Sendlinger Tor' })).toHaveLength(2)
+    await waitFor(() => expect(JSON.parse(localStorage.getItem(DESTINATIONS_STORAGE_KEY) ?? '{}')).toMatchObject({
+      favorites: ['Sendlinger Tor'],
+    }))
+
+    const removeButtons = screen.getAllByRole('button', { name: 'Aus Favoriten entfernen: Sendlinger Tor' })
+    await user.click(removeButtons[1])
+    expect(screen.queryByRole('heading', { name: 'Favoriten' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Zu Favoriten hinzufügen: Sendlinger Tor' })).toBeInTheDocument()
   })
 
   it('shows a destination-search failure', async () => {

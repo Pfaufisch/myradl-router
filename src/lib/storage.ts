@@ -1,6 +1,26 @@
-import type { Destination, Station, TripState } from '../types'
+import type { Destination, SavedDestinationsState, Station, TripState } from '../types'
 
 export const TRIP_STORAGE_KEY = 'myradl-router.trip.v1'
+export const DESTINATIONS_STORAGE_KEY = 'myradl-router.destinations.v1'
+export const MAX_RECENT_DESTINATIONS = 5
+
+const emptySavedDestinations = (): SavedDestinationsState => ({
+  version: 1,
+  recents: [],
+  favorites: [],
+})
+
+const normalizedQuery = (query: string): string => query.trim().toLocaleLowerCase('de')
+
+function uniqueQueries(queries: string[]): string[] {
+  const seen = new Set<string>()
+  return queries.filter((query) => {
+    const normalized = normalizedQuery(query)
+    if (seen.has(normalized)) return false
+    seen.add(normalized)
+    return true
+  })
+}
 
 const isFiniteNumber = (value: unknown): value is number =>
   typeof value === 'number' && Number.isFinite(value)
@@ -63,4 +83,83 @@ export function saveTrip(trip: TripState, storage: Pick<Storage, 'setItem'> = lo
 
 export function clearTrip(storage: Pick<Storage, 'removeItem'> = localStorage): void {
   storage.removeItem(TRIP_STORAGE_KEY)
+}
+
+export function parseSavedDestinations(value: string | null): SavedDestinationsState {
+  if (!value) return emptySavedDestinations()
+
+  try {
+    const item = JSON.parse(value) as Record<string, unknown>
+    if (
+      item.version !== 1 ||
+      !Array.isArray(item.recents) ||
+      !Array.isArray(item.favorites) ||
+      !item.recents.every((query) => typeof query === 'string' && query.trim().length > 0) ||
+      !item.favorites.every((query) => typeof query === 'string' && query.trim().length > 0)
+    ) {
+      return emptySavedDestinations()
+    }
+
+    return {
+      version: 1,
+      recents: uniqueQueries(item.recents.map((query) => query.trim())).slice(0, MAX_RECENT_DESTINATIONS),
+      favorites: uniqueQueries(item.favorites.map((query) => query.trim())),
+    }
+  } catch {
+    return emptySavedDestinations()
+  }
+}
+
+export function loadSavedDestinations(
+  storage: Pick<Storage, 'getItem'> = localStorage,
+): SavedDestinationsState {
+  return parseSavedDestinations(storage.getItem(DESTINATIONS_STORAGE_KEY))
+}
+
+export function saveSavedDestinations(
+  destinations: SavedDestinationsState,
+  storage: Pick<Storage, 'setItem'> = localStorage,
+): void {
+  storage.setItem(DESTINATIONS_STORAGE_KEY, JSON.stringify(destinations))
+}
+
+export function addRecentDestination(
+  destinations: SavedDestinationsState,
+  query: string,
+): SavedDestinationsState {
+  const trimmed = query.trim()
+  if (!trimmed) return destinations
+  const normalized = normalizedQuery(trimmed)
+
+  return {
+    ...destinations,
+    recents: [
+      trimmed,
+      ...destinations.recents.filter((recent) => normalizedQuery(recent) !== normalized),
+    ].slice(0, MAX_RECENT_DESTINATIONS),
+  }
+}
+
+export function toggleFavoriteDestination(
+  destinations: SavedDestinationsState,
+  query: string,
+): SavedDestinationsState {
+  const trimmed = query.trim()
+  if (!trimmed) return destinations
+  const normalized = normalizedQuery(trimmed)
+  const isFavorite = destinations.favorites.some(
+    (favorite) => normalizedQuery(favorite) === normalized,
+  )
+
+  return {
+    ...destinations,
+    favorites: isFavorite
+      ? destinations.favorites.filter((favorite) => normalizedQuery(favorite) !== normalized)
+      : [trimmed, ...destinations.favorites],
+  }
+}
+
+export function isFavoriteDestination(destinations: SavedDestinationsState, query: string): boolean {
+  const normalized = normalizedQuery(query)
+  return destinations.favorites.some((favorite) => normalizedQuery(favorite) === normalized)
 }
