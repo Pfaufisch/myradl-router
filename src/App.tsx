@@ -271,12 +271,27 @@ function DestinationScreen({
         />
       )}
 
-      <p className="attribution">
-        Zielsuche mit Photon · Daten ©{' '}
-        <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">
-          OpenStreetMap-Mitwirkende
-        </a>
-      </p>
+      <footer className="attribution">
+        <p>
+          Zielsuche mit{' '}
+          <a href="https://photon.komoot.io/" target="_blank" rel="noreferrer">
+            Photon API
+          </a>
+          {' '}· Daten ©{' '}
+          <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">
+            OpenStreetMap-Mitwirkende
+          </a>
+        </p>
+        <p>
+          <a href="https://github.com/Pfaufisch/myradl-router/tree/main" target="_blank" rel="noreferrer">
+            GitHub
+          </a>
+          {' '}·{' '}
+          Kontakt: <a href="https://social.lol/@hay" target="_blank" rel="noreferrer">
+            Pfaufisch
+          </a>
+        </p>
+      </footer>
     </main>
   )
 }

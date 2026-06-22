@@ -114,6 +114,26 @@ describe('App flow', () => {
     expect(await screen.findByRole('button', { name: /Marienplatz, 80331 München/ }, { timeout: 2_000 })).toBeInTheDocument()
   })
 
+  it('links to the project, contact, and search API from the footer', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await user.click(screen.getByRole('button', { name: /Fahrt starten/ }))
+
+    expect(screen.getByRole('link', { name: 'GitHub' })).toHaveAttribute(
+      'href',
+      'https://github.com/Pfaufisch/myradl-router/tree/main',
+    )
+    expect(screen.getByRole('link', { name: 'Pfaufisch' })).toHaveAttribute(
+      'href',
+      'https://social.lol/@hay',
+    )
+    expect(screen.getByText(/Kontakt:/)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Photon API' })).toHaveAttribute(
+      'href',
+      'https://photon.komoot.io/',
+    )
+  })
+
   it('adds and removes a favorite from the saved destination lists', async () => {
     localStorage.setItem(DESTINATIONS_STORAGE_KEY, JSON.stringify({
       version: 1,

@@ -116,6 +116,8 @@ h1, h2, p { margin-top: 0; }
 .favorite-toggle:hover { background: var(--violet-soft); color: var(--violet); }
 .favorite-toggle.is-favorite { color: var(--violet); }
 .attribution { margin-top: 28px; }
+.attribution p { margin: 0; }
+.attribution p + p { margin-top: 6px; }
 .attribution a { color: inherit; }
 
 .destination-chip { display: flex; align-items: flex-start; gap: 8px; color: var(--violet); background: var(--violet-soft); border-radius: 12px; padding: 10px 12px; font-size: .8rem; line-height: 1.35; margin: 16px 0 20px; }
