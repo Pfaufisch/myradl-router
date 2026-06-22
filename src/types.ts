@@ -33,5 +33,11 @@ export interface TripState {
   selectedStation: Station | null
 }
 
+export interface SavedDestinationsState {
+  version: 1
+  recents: string[]
+  favorites: string[]
+}
+
 export type CompassPermission = 'prompt' | 'granted' | 'denied' | 'unsupported'
 export type HeadingSource = 'compass' | 'gps' | 'north-up' | 'waiting'

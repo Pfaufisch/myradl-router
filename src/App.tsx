@@ -3,13 +3,23 @@ import { requestCompassPermission } from './lib/compass'
 import { formatDistance, formatElapsed, isBillingWarning } from './lib/geo'
 import { searchDestinations } from './lib/photon'
 import { fetchStations, rankStations } from './lib/stations'
-import { clearTrip, loadTrip, saveTrip } from './lib/storage'
+import {
+  addRecentDestination,
+  clearTrip,
+  isFavoriteDestination,
+  loadSavedDestinations,
+  loadTrip,
+  saveSavedDestinations,
+  saveTrip,
+  toggleFavoriteDestination,
+} from './lib/storage'
 import { useGuidance } from './hooks/useGuidance'
 import type {
   AppView,
   CompassPermission,
   Destination,
   RankedStation,
+  SavedDestinationsState,
   Station,
   TripState,
 } from './types'
@@ -78,7 +88,7 @@ function StartScreen({ onStart }: { onStart: () => void }) {
         <button className="primary-button" onClick={onStart}>
           Fahrt starten <span aria-hidden="true">→</span>
         </button>
-        <p className="privacy-note">Kein Login · keine Standortdaten gespeichert</p>
+        <p className="privacy-note">Kein Login · deine Ziele bleiben nur in diesem Browser</p>
       </div>
     </main>
   )
@@ -86,10 +96,63 @@ function StartScreen({ onStart }: { onStart: () => void }) {
 
 interface DestinationScreenProps {
   onBack: () => void
-  onSelect: (destination: Destination) => void
+  savedDestinations: SavedDestinationsState
+  onSelect: (destination: Destination, query: string) => void
+  onToggleFavorite: (query: string) => void
 }
 
-function DestinationScreen({ onBack, onSelect }: DestinationScreenProps) {
+interface SavedDestinationListProps {
+  title: string
+  entries: string[]
+  savedDestinations: SavedDestinationsState
+  onSelect: (query: string) => void
+  onToggleFavorite: (query: string) => void
+}
+
+function SavedDestinationList({
+  title,
+  entries,
+  savedDestinations,
+  onSelect,
+  onToggleFavorite,
+}: SavedDestinationListProps) {
+  const headingId = title === 'Letzte Ziele' ? 'saved-recents' : 'saved-favorites'
+
+  return (
+    <section className="saved-destination-section" aria-labelledby={headingId}>
+      <h2 id={headingId}>{title}</h2>
+      <ul className="saved-destination-list">
+        {entries.map((query) => {
+          const favorite = isFavoriteDestination(savedDestinations, query)
+          return (
+            <li key={query.toLocaleLowerCase('de')}>
+              <button className="saved-destination-select" onClick={() => onSelect(query)}>
+                <span className="saved-destination-icon" aria-hidden="true">⌖</span>
+                <span>{query}</span>
+                <span className="result-arrow" aria-hidden="true">→</span>
+              </button>
+              <button
+                className={`favorite-toggle${favorite ? ' is-favorite' : ''}`}
+                onClick={() => onToggleFavorite(query)}
+                aria-label={`${favorite ? 'Aus Favoriten entfernen' : 'Zu Favoriten hinzufügen'}: ${query}`}
+                aria-pressed={favorite}
+              >
+                <span aria-hidden="true">{favorite ? '★' : '☆'}</span>
+              </button>
+            </li>
+          )
+        })}
+      </ul>
+    </section>
+  )
+}
+
+function DestinationScreen({
+  onBack,
+  savedDestinations,
+  onSelect,
+  onToggleFavorite,
+}: DestinationScreenProps) {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<Destination[]>([])
   const [loading, setLoading] = useState(false)
@@ -126,6 +189,14 @@ function DestinationScreen({ onBack, onSelect }: DestinationScreenProps) {
     }
   }, [query])
 
+  const selectSavedQuery = (savedQuery: string) => {
+    setResults([])
+    setError(null)
+    setQuery(savedQuery)
+  }
+
+  const showSavedDestinations = query.trim().length === 0
+
   return (
     <main className="screen content-screen">
       <button className="back-button" onClick={onBack} aria-label="Zurück zum Start">
@@ -153,19 +224,21 @@ function DestinationScreen({ onBack, onSelect }: DestinationScreenProps) {
         )}
       </div>
 
-      <div className="search-status" aria-live="polite">
-        {loading && <span className="loading-line">Suche läuft …</span>}
-        {error && <div className="message error-message">{error}</div>}
-        {!loading && !error && query.trim().length >= 3 && results.length === 0 && (
-          <p>Kein passendes Ziel gefunden. Ergänze Ort oder Postleitzahl.</p>
-        )}
-      </div>
+      {query.trim().length > 0 && (
+        <div className="search-status" aria-live="polite">
+          {loading && <span className="loading-line">Suche läuft …</span>}
+          {error && <div className="message error-message">{error}</div>}
+          {!loading && !error && query.trim().length >= 3 && results.length === 0 && (
+            <p>Kein passendes Ziel gefunden. Ergänze Ort oder Postleitzahl.</p>
+          )}
+        </div>
+      )}
 
       {results.length > 0 && (
         <ul className="destination-results" aria-label="Suchergebnisse">
           {results.map((result) => (
             <li key={result.id}>
-              <button onClick={() => onSelect(result)}>
+              <button onClick={() => onSelect(result, query.trim())}>
                 <span className="result-pin" aria-hidden="true">●</span>
                 <span>
                   <strong>{result.name}</strong>
@@ -176,6 +249,26 @@ function DestinationScreen({ onBack, onSelect }: DestinationScreenProps) {
             </li>
           ))}
         </ul>
+      )}
+
+      {showSavedDestinations && savedDestinations.recents.length > 0 && (
+        <SavedDestinationList
+          title="Letzte Ziele"
+          entries={savedDestinations.recents}
+          savedDestinations={savedDestinations}
+          onSelect={selectSavedQuery}
+          onToggleFavorite={onToggleFavorite}
+        />
+      )}
+
+      {showSavedDestinations && savedDestinations.favorites.length > 0 && (
+        <SavedDestinationList
+          title="Favoriten"
+          entries={savedDestinations.favorites}
+          savedDestinations={savedDestinations}
+          onSelect={selectSavedQuery}
+          onToggleFavorite={onToggleFavorite}
+        />
       )}
 
       <p className="attribution">
@@ -394,7 +487,7 @@ function EndTripDialog({ onCancel, onConfirm }: { onCancel: () => void; onConfir
       <div className="confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="end-trip-title">
         <span className="dialog-icon" aria-hidden="true">✓</span>
         <h2 id="end-trip-title">Fahrt wirklich beenden?</h2>
-        <p>Der Timer und dein gewähltes Ziel werden aus diesem Browser gelöscht.</p>
+        <p>Die aktuelle Fahrt wird gelöscht. Letzte Ziele und Favoriten bleiben in diesem Browser gespeichert.</p>
         <button className="primary-button" onClick={onConfirm}>Ja, Fahrt beenden</button>
         <button className="secondary-button" onClick={onCancel}>Weiter navigieren</button>
       </div>
@@ -405,6 +498,9 @@ function EndTripDialog({ onCancel, onConfirm }: { onCancel: () => void; onConfir
 export default function App() {
   const [trip, setTrip] = useState<TripState | null>(() => loadTrip())
   const [view, setView] = useState<AppView>(() => viewForTrip(loadTrip()))
+  const [savedDestinations, setSavedDestinations] = useState<SavedDestinationsState>(
+    () => loadSavedDestinations(),
+  )
   const [stations, setStations] = useState<Station[]>([])
   const [stationsLoading, setStationsLoading] = useState(false)
   const [stationsError, setStationsError] = useState<string | null>(null)
@@ -418,6 +514,10 @@ export default function App() {
     if (trip) saveTrip(trip)
     else clearTrip()
   }, [trip])
+
+  useEffect(() => {
+    saveSavedDestinations(savedDestinations)
+  }, [savedDestinations])
 
   const loadStations = useCallback(async () => {
     setStationsLoading(true)
@@ -467,9 +567,14 @@ export default function App() {
     setView('destination')
   }
 
-  const chooseDestination = (destination: Destination) => {
+  const chooseDestination = (destination: Destination, query: string) => {
+    setSavedDestinations((current) => addRecentDestination(current, query))
     setTrip((current) => current ? { ...current, destination, selectedStation: null } : current)
     setView('stations')
+  }
+
+  const toggleFavorite = (query: string) => {
+    setSavedDestinations((current) => toggleFavoriteDestination(current, query))
   }
 
   const chooseStation = async (station: Station) => {
@@ -516,7 +621,9 @@ export default function App() {
       {view === 'destination' && (
         <DestinationScreen
           onBack={() => setShowEndDialog(true)}
+          savedDestinations={savedDestinations}
           onSelect={chooseDestination}
+          onToggleFavorite={toggleFavorite}
         />
       )}
       {view === 'stations' && trip?.destination && (
