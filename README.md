@@ -1,21 +1,21 @@
 # MyRadl Router
 
-Eine mobile Web-App, die verfügbare MyRadl-Rückgabestationen nahe einem Ziel findet und mit einem Kompasspfeil dorthin führt.
+A mobile web app that finds available MyRadl return stations near a destination and guides you there with a compass arrow.
 
-## Entwicklung
+## Development
 
 ```bash
 npm install
 npm run dev
 ```
 
-Für Standort und Gerätekompass ist in Produktion HTTPS erforderlich. `localhost` gilt für die lokale Entwicklung als sicherer Kontext.
+Geolocation and the device compass require HTTPS in production. For local development, `localhost` is considered a secure context.
 
-## Prüfung
+## Testing
 
 ```bash
 npm test
 npm run build
 ```
 
-Die App verwendet ausschließlich öffentliche, CORS-fähige Endpunkte von nextbike (GBFS) und Photon. Es gibt kein Backend und keine Verbindung zu einem nextbike- oder MVGO-Konto.
+The app uses only public, CORS-enabled endpoints from nextbike (GBFS) and Photon. It has no backend and does not connect to a nextbike or MVGO account.
