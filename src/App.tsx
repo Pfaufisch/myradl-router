@@ -450,7 +450,17 @@ function NavigationScreen({
       <div className="nav-station">
         <p>Deine Rückgabestation</p>
         <h1>{trip.selectedStation.name}</h1>
-        {trip.selectedStation.shortName && <span>Station {trip.selectedStation.shortName}</span>}
+        {trip.selectedStation.shortName && (
+          <a
+            className="station-map-link"
+            href={`https://www.google.com/maps/search/?api=1&query=${trip.selectedStation.lat}%2C${trip.selectedStation.lon}`}
+            target="_blank"
+            rel="noreferrer"
+          >
+            Station {trip.selectedStation.shortName}
+            <span className="sr-only"> in Google Maps öffnen</span>
+          </a>
+        )}
       </div>
 
       <DirectionArrow rotation={guidance.arrowRotation} waiting={guidance.bearing === null} />
