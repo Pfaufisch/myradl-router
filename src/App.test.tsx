@@ -80,9 +80,9 @@ describe('App flow', () => {
     expect(await screen.findByText('Navigation aktiv')).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Tal & Marienplatz' })).toBeInTheDocument()
     expect(screen.getByText('Pfeil ist nach Norden ausgerichtet')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Station 95001 in Karten öffnen' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Station 95001 in Google Maps öffnen' })).toHaveAttribute(
       'href',
-      'geo:48.1368,11.5762',
+      'https://www.google.com/maps/search/?api=1&query=48.1368%2C11.5762',
     )
 
     await user.click(screen.getByRole('button', { name: 'Fahrt beenden' }))

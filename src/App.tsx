@@ -453,10 +453,12 @@ function NavigationScreen({
         {trip.selectedStation.shortName && (
           <a
             className="station-map-link"
-            href={`geo:${trip.selectedStation.lat},${trip.selectedStation.lon}`}
-            aria-label={`Station ${trip.selectedStation.shortName} in Karten öffnen`}
+            href={`https://www.google.com/maps/search/?api=1&query=${trip.selectedStation.lat}%2C${trip.selectedStation.lon}`}
+            target="_blank"
+            rel="noreferrer"
           >
             Station {trip.selectedStation.shortName}
+            <span className="sr-only"> in Google Maps öffnen</span>
           </a>
         )}
       </div>
