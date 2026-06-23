@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { requestCompassPermission } from './lib/compass'
 import { formatDistance, formatElapsed, isBillingWarning } from './lib/geo'
+import {
+  googleMapsIosUrl,
+  googleMapsWebUrl,
+  isIosDevice,
+  launchGoogleMapsApp,
+} from './lib/maps'
 import { searchDestinations } from './lib/photon'
 import { fetchStations, rankStations } from './lib/stations'
 import {
@@ -29,6 +35,34 @@ function viewForTrip(trip: TripState | null): AppView {
   if (trip.selectedStation) return 'navigation'
   if (trip.destination) return 'stations'
   return 'destination'
+}
+
+const LIGHT_THEME_COLOR = '#f8f7fc'
+const NAVIGATION_THEME_COLOR = '#1e0a8c'
+
+function useThemeColor(view: AppView) {
+  useEffect(() => {
+    const themeColor = view === 'navigation' ? NAVIGATION_THEME_COLOR : LIGHT_THEME_COLOR
+    let meta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')
+    const createdMeta = !meta
+
+    if (!meta) {
+      meta = document.createElement('meta')
+      meta.name = 'theme-color'
+      document.head.append(meta)
+    }
+
+    const previousContent = meta.content
+    const previousBackground = document.documentElement.style.backgroundColor
+    meta.content = themeColor
+    document.documentElement.style.backgroundColor = themeColor
+
+    return () => {
+      document.documentElement.style.backgroundColor = previousBackground
+      if (createdMeta) meta.remove()
+      else meta.content = previousContent
+    }
+  }, [view])
 }
 
 function useClock(interval = 1_000): number {
@@ -422,6 +456,7 @@ function NavigationScreen({
   const elapsed = now - trip.startedAt
   const distance = guidance.distance === null ? null : formatDistance(guidance.distance)
   const nearby = guidance.distance !== null && guidance.distance <= 30
+  const mapsWebUrl = googleMapsWebUrl(trip.selectedStation)
 
   const headingLabel = {
     compass: 'Kompass aktiv',
@@ -453,9 +488,14 @@ function NavigationScreen({
         {trip.selectedStation.shortName && (
           <a
             className="station-map-link"
-            href={`https://www.google.com/maps/search/?api=1&query=${trip.selectedStation.lat}%2C${trip.selectedStation.lon}`}
+            href={mapsWebUrl}
             target="_blank"
             rel="noreferrer"
+            onClick={(event) => {
+              if (!isIosDevice()) return
+              event.preventDefault()
+              launchGoogleMapsApp(googleMapsIosUrl(trip.selectedStation), mapsWebUrl)
+            }}
           >
             Station {trip.selectedStation.shortName}
             <span className="sr-only"> in Google Maps öffnen</span>
@@ -534,6 +574,8 @@ export default function App() {
   const [stationUnavailable, setStationUnavailable] = useState(false)
   const [navigationStatusError, setNavigationStatusError] = useState<string | null>(null)
   const [showEndDialog, setShowEndDialog] = useState(false)
+
+  useThemeColor(view)
 
   useEffect(() => {
     if (trip) saveTrip(trip)

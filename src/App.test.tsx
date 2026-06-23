@@ -67,6 +67,8 @@ describe('App flow', () => {
   it('runs from trip start through navigation and confirmed reset', async () => {
     const user = userEvent.setup()
     render(<App />)
+    expect(document.querySelector('meta[name="theme-color"]')).toHaveAttribute('content', '#f8f7fc')
+    expect(document.documentElement).toHaveStyle({ backgroundColor: '#f8f7fc' })
     await user.click(screen.getByRole('button', { name: /Fahrt starten/ }))
     expect(screen.getByRole('heading', { name: 'Wohin möchtest du?' })).toBeInTheDocument()
 
@@ -78,6 +80,8 @@ describe('App flow', () => {
     await user.click(await screen.findByRole('button', { name: /Tal & Marienplatz/ }))
 
     expect(await screen.findByText('Navigation aktiv')).toBeInTheDocument()
+    expect(document.querySelector('meta[name="theme-color"]')).toHaveAttribute('content', '#1e0a8c')
+    expect(document.documentElement).toHaveStyle({ backgroundColor: '#1e0a8c' })
     expect(screen.getByRole('heading', { name: 'Tal & Marienplatz' })).toBeInTheDocument()
     expect(screen.getByText('Pfeil ist nach Norden ausgerichtet')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Station 95001 in Google Maps öffnen' })).toHaveAttribute(
@@ -89,6 +93,8 @@ describe('App flow', () => {
     expect(screen.getByRole('dialog')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Ja, Fahrt beenden' }))
     expect(screen.getByRole('button', { name: /Fahrt starten/ })).toBeInTheDocument()
+    expect(document.querySelector('meta[name="theme-color"]')).toHaveAttribute('content', '#f8f7fc')
+    expect(document.documentElement).toHaveStyle({ backgroundColor: '#f8f7fc' })
     expect(localStorage.getItem(TRIP_STORAGE_KEY)).toBeNull()
     expect(JSON.parse(localStorage.getItem(DESTINATIONS_STORAGE_KEY) ?? '{}')).toMatchObject({
       recents: ['Marienplatz'],
