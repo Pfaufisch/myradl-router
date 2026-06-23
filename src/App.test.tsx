@@ -1,8 +1,18 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import App from './App'
+import { isIosDevice, launchGoogleMapsApp } from './lib/maps'
 import { DESTINATIONS_STORAGE_KEY, TRIP_STORAGE_KEY } from './lib/storage'
 import type { TripState } from './types'
+
+vi.mock('./lib/maps', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./lib/maps')>()
+  return {
+    ...actual,
+    isIosDevice: vi.fn(() => false),
+    launchGoogleMapsApp: vi.fn(),
+  }
+})
 
 const stationInformation = {
   data: {
@@ -60,6 +70,8 @@ describe('App flow', () => {
   beforeEach(() => {
     installFetch()
     installGeolocation()
+    vi.mocked(isIosDevice).mockReset().mockReturnValue(false)
+    vi.mocked(launchGoogleMapsApp).mockReset()
   })
 
   afterEach(() => vi.unstubAllGlobals())
@@ -99,6 +111,26 @@ describe('App flow', () => {
     expect(JSON.parse(localStorage.getItem(DESTINATIONS_STORAGE_KEY) ?? '{}')).toMatchObject({
       recents: ['Marienplatz'],
     })
+  })
+
+  it('opens the Google Maps app on iOS and prevents default link navigation', () => {
+    const activeTrip: TripState = {
+      version: 1,
+      startedAt: Date.now() - 60_000,
+      destination: { id: 'N:1', name: 'Marienplatz', label: 'Marienplatz, 80331 München', lat: 48.1371, lon: 11.5754 },
+      selectedStation: { id: 'station-1', shortName: '95001', name: 'Tal & Marienplatz', regionId: '1301', lat: 48.1368, lon: 11.5762, acceptsReturns: true, lastReported: 123 },
+    }
+    localStorage.setItem(TRIP_STORAGE_KEY, JSON.stringify(activeTrip))
+    vi.mocked(isIosDevice).mockReturnValue(true)
+    render(<App />)
+
+    const link = screen.getByRole('link', { name: 'Station 95001 in Google Maps öffnen' })
+    expect(fireEvent.click(link)).toBe(false)
+    expect(launchGoogleMapsApp).toHaveBeenCalledTimes(1)
+    expect(launchGoogleMapsApp).toHaveBeenCalledWith(
+      'comgooglemapsurl://www.google.com/maps/search/?api=1&query=48.1368%2C11.5762',
+      'https://www.google.com/maps/search/?api=1&query=48.1368%2C11.5762',
+    )
   })
 
   it('shows saved destinations only before typing and repeats their search on selection', async () => {

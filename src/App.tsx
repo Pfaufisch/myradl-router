@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react'
 import { requestCompassPermission } from './lib/compass'
 import { formatDistance, formatElapsed, isBillingWarning } from './lib/geo'
 import {
@@ -41,7 +41,7 @@ const LIGHT_THEME_COLOR = '#f8f7fc'
 const NAVIGATION_THEME_COLOR = '#1e0a8c'
 
 function useThemeColor(view: AppView) {
-  useEffect(() => {
+  useLayoutEffect(() => {
     const themeColor = view === 'navigation' ? NAVIGATION_THEME_COLOR : LIGHT_THEME_COLOR
     let meta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')
     const createdMeta = !meta

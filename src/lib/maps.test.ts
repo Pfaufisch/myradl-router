@@ -33,6 +33,8 @@ function createLaunchEnvironment() {
 }
 
 describe('Google Maps links', () => {
+  afterEach(() => vi.useRealTimers())
+
   it('builds web and iOS URLs for station coordinates', () => {
     expect(googleMapsWebUrl(coordinates)).toBe(
       'https://www.google.com/maps/search/?api=1&query=48.1368%2C11.5762',
@@ -60,7 +62,6 @@ describe('Google Maps links', () => {
 
     vi.advanceTimersByTime(GOOGLE_MAPS_FALLBACK_DELAY)
     expect(navigate).toHaveBeenLastCalledWith('https://maps.example/station')
-    vi.useRealTimers()
   })
 
   it('cancels the fallback when opening the app hides the page', () => {
@@ -72,7 +73,6 @@ describe('Google Maps links', () => {
     vi.advanceTimersByTime(GOOGLE_MAPS_FALLBACK_DELAY)
 
     expect(navigate).toHaveBeenCalledTimes(1)
-    vi.useRealTimers()
   })
 
   it('falls back immediately when the app URL cannot be opened', () => {
