@@ -450,7 +450,15 @@ function NavigationScreen({
       <div className="nav-station">
         <p>Deine Rückgabestation</p>
         <h1>{trip.selectedStation.name}</h1>
-        {trip.selectedStation.shortName && <span>Station {trip.selectedStation.shortName}</span>}
+        {trip.selectedStation.shortName && (
+          <a
+            className="station-map-link"
+            href={`geo:${trip.selectedStation.lat},${trip.selectedStation.lon}`}
+            aria-label={`Station ${trip.selectedStation.shortName} in Karten öffnen`}
+          >
+            Station {trip.selectedStation.shortName}
+          </a>
+        )}
       </div>
 
       <DirectionArrow rotation={guidance.arrowRotation} waiting={guidance.bearing === null} />

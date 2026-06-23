@@ -156,7 +156,9 @@ h1, h2, p { margin-top: 0; }
 .nav-station { text-align: center; margin: 14px 0 0; }
 .nav-station p { text-transform: uppercase; letter-spacing: .12em; font-size: .63rem; opacity: .65; margin-bottom: 7px; }
 .nav-station h1 { font-size: clamp(1.5rem, 7vw, 2rem); line-height: 1.08; letter-spacing: -.04em; margin: 0 auto 4px; max-width: 430px; }
-.nav-station span { font-size: .72rem; opacity: .65; }
+.station-map-link { min-height: 44px; display: inline-flex; align-items: center; color: inherit; font-size: .72rem; opacity: .65; text-decoration: underline; text-underline-offset: 3px; }
+.station-map-link:hover { opacity: 1; }
+.station-map-link:focus-visible { outline: 2px solid #ffd75d; outline-offset: 3px; border-radius: 4px; opacity: 1; }
 
 .direction-dial { width: min(57vw, 255px); height: min(57vw, 255px); min-width: 190px; min-height: 190px; border-radius: 50%; background: radial-gradient(circle at 50% 40%, rgb(255 255 255 / 12%), rgb(255 255 255 / 4%)); border: 1px solid rgb(255 255 255 / 14%); margin: 20px 0 10px; position: relative; display: grid; place-items: center; box-shadow: inset 0 0 0 14px rgb(255 255 255 / 2%), 0 18px 50px rgb(0 0 0 / 14%); }
 .direction-dial::before, .direction-dial::after { content: ''; position: absolute; background: rgb(255 255 255 / 10%); }
